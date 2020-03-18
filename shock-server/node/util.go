@@ -80,7 +80,7 @@ func FMOpen(filepath string) (f *os.File, err error) {
 
 	// try to read file from disk
 	f, err = os.Open(filepath) // this will also open a sym link from the cache location
-
+	// file exists on local disk (this does include symlinked files from the cache) all is well and we return the handle
 	if err == nil {
 		return
 	}
@@ -92,6 +92,7 @@ func FMOpen(filepath string) (f *os.File, err error) {
 
 	var nodeInstance, _ = Load(uuid)
 
+	// we use a Mutex to ensure each file is only downloaded once at a time
 	// lock access to map
 	for true {
 		TransitMapMutex.Lock()
@@ -217,6 +218,13 @@ LocationLoop:
 // S3Download download a file and its indices from an S3 source using an external boto3 python script
 func S3Download(uuid string, nodeInstance *Node, location *conf.LocationConfig) (err error, md5sum string) {
 	functionName := "S3Download"
+	binaryName := "boto-s3-download.py"
+
+	path, err := exec.LookPath(binaryName)
+
+	if err != nil {
+		log.Fatalf("(%s) cannot locate: %s [Err: %s]", functionName, binaryName, err.Error())
+	}
 
 	itemkey := fmt.Sprintf("%s.data", uuid)
 	indexfile := fmt.Sprintf("%s.idx.zip", uuid) // the zipped contents of the idx directory in S3
@@ -230,8 +238,8 @@ func S3Download(uuid string, nodeInstance *Node, location *conf.LocationConfig) 
 	}
 	tmpfile.Close()
 
-	baseArgString := fmt.Sprintf("boto-s3-download.py --bucket=%s --region=%s --tmpfile=%s --s3endpoint=%s",
-		location.Bucket, location.Region, tmpfile.Name(), location.URL)
+	baseArgString := fmt.Sprintf("%s --bucket=%s --region=%s --tmpfile=%s --s3endpoint=%s",
+		path, location.Bucket, location.Region, tmpfile.Name(), location.URL)
 	argString := fmt.Sprintf("%s --object=%s",
 		baseArgString, itemkey)
 	args := strings.Fields(argString)

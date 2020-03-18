@@ -124,7 +124,7 @@ curl -s -X POST -H "$AUTH" "${SHOCK_SERVER_URL}/node/${id}/locations/ -d ${JSON_
 ### ################################################################################
 
 ### set Location as verified in Shock, confirming the data for said node is in TSM
-verify_location() {
+function verify_location() {
 id=$1
 
 local val=true

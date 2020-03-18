@@ -126,9 +126,6 @@ func isNestedErrorRetryable(parentErr awserr.Error) bool {
 // IsErrorRetryable returns whether the error is retryable, based on its Code.
 // Returns false if error is nil.
 func IsErrorRetryable(err error) bool {
-	if err == nil {
-		return false
-	}
 	return shouldRetryError(err)
 }
 
@@ -219,6 +216,9 @@ func IsErrorExpiredCreds(err error) bool {
 //
 // Alias for the utility function IsErrorRetryable
 func (r *Request) IsErrorRetryable() bool {
+	if r.Error == nil {
+		return false
+	}
 	if isErrCode(r.Error, r.RetryErrorCodes) {
 		return true
 	}
@@ -246,7 +246,7 @@ func (r *Request) IsErrorThrottle() bool {
 }
 
 func isErrCode(err error, codes []string) bool {
-	if aerr, ok := err.(awserr.Error); ok && aerr != nil {
+	if aerr, ok := err.(awserr.Error); ok {
 		for _, code := range codes {
 			if code == aerr.Code() {
 				return true

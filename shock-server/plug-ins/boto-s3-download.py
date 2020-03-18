@@ -19,6 +19,8 @@ def md5sum(src, length=io.DEFAULT_BUFFER_SIZE):
 
 def main():
 
+   log=open("/var/tmp/boto-s3.log", "a+")
+
    parser = argparse.ArgumentParser()
    parser.add_argument("-a","--keyid", default=None, help=" aws_access_key_id")
    parser.add_argument("-b","--bucket", default=None, help="AWS bucket")
@@ -41,15 +43,29 @@ def main():
       print ('region is=', args.region)
       print ('object is =', args.objectname)
 
+
+      log.write ("keyId  is =%s" % args.keyid)
+      log.write ("accessKey is =%s" % args.accesskey)
+      log.write ("bucket is = %s" % args.bucket)
+      log.write ("'tmpfile is = %s"  % args.tmpfile)
+      log.write ("region is= %s" %  args.region)
+      log.write ("'object is = %s" % args.objectname)
+
    if args.tmpfile is None:
       print ('we need a filename')
       sys.exit(2)  
 
+   suffix="data";
+   if args.objectname.endswith(suffix) is True:
+      node=args.objectname
+   else:
+      node= "%s.data" % args.objectname
 
    # if passed use credentials to establish connection
    if args.accesskey is None:
       if args.verbose:
          print ('using existing credentials from ENV vars or files')
+      log.write ('using existing credentials from ENV vars or files ')
       s3 = boto3.client('s3',
             endpoint_url=args.s3endpoint,
             region_name=args.region
@@ -57,7 +73,9 @@ def main():
    else:
    # use env. default for connection details --> see  https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html
       if args.verbose:
-         print ('using credentials from cmd-line')
+         print (' using credentials from cmd-line')
+      log.write (' using credentials from cmd-line')
+
       s3 = boto3.client('s3',
          endpoint_url=args.s3endpoint,
          region_name=args.region,
@@ -65,8 +83,10 @@ def main():
          aws_secret_access_key=args.accesskey
       )
 
+   log.write (' done ')
+
    with open(args.tmpfile, 'wb') as f:
-      s3.download_fileobj(args.bucket, args.objectname, f)
+      s3.download_fileobj(args.bucket, node, f)
    
    
    md5_new = md5sum(args.tmpfile)

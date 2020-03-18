@@ -290,7 +290,8 @@ func fetchFileStream(urlStr string) (f string, r io.ReadCloser, err error) {
 	cleanPath := strings.Join(pathParts, "/")
 
 	if (u.Scheme == "http") || (u.Scheme == "https") {
-		res, err := httpclient.Get(u.String(), httpclient.Header{}, nil, nil)
+		//res, err := httpclient.Get(u.String(), httpclient.Header{}, nil, nil)
+		res, err := httpclient.Get(u.String(), httpclient.Header{}, nil)
 		if err != nil {
 			return "", nil, errors.New("httpclient returned: " + err.Error())
 		}

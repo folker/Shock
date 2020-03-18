@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -31,6 +32,18 @@ type file struct {
 
 func NewForm() (f *Form) {
 	return &Form{}
+}
+
+func (f *Form) Print() (msg string) {
+	msg = "parameters:\n"
+	for _, para := range f.params {
+		msg += fmt.Sprintf("%s\t%s\n", para.k, para.v)
+	}
+	msg += "files:\n"
+	for _, file := range f.files {
+		msg += fmt.Sprintf("%s\t%s\n", file.n, file.p)
+	}
+	return
 }
 
 func (f *Form) AddFile(name, path string) {
