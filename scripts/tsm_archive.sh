@@ -35,7 +35,7 @@ TSM_SERVER=TSM_CELS
 # NOTE: we assume authentication bits to be contain in the AUTH env variable
 WCOPY=${SHOCK_DATA_PATH}/$(basename $0)_wcopy.$$.txt
 OUTCOPY=${SHOCK_DATA_PATH}/$(basename $0)_output.$$.txt
-LOCKF=$${SHOCK_DATA_PATH}/$(basename $0).lock
+LOCKF=${SHOCK_DATA_PATH}/$(basename $0).lock
 
 ### no more config
 # AUTH is set externally
@@ -140,7 +140,7 @@ curl -s -X POST -H "$AUTH" "${SHOCK_SERVER_URL}/node/${id}/locations/ -d ${JSON_
 
 #### write usage info
 function usage() {
-      echo "script usage: $(basename $0) [-v] [-h] -d <TSM_dumpfile> filename" >&2
+      echo "script usage: $(basename $0) [-v] [-h] filename" >&2
       echo "connect with Shock to retrieve list of files to be moved to location" >&2
 }
 
@@ -186,7 +186,7 @@ if [ ! -f $1 ] ; then
 	exit 1	
 fi
 
-if ["${force}x" == "x" ] && [ -e ${LOCKF} ]; then 
+if [ "${force}x" == "x" ] && [ -e ${LOCKF} ]; then 
   echo " [$(basename $0)] Lockfile ${LOCKF} exists; exiting"
   exit 1
 fi
@@ -195,10 +195,10 @@ touch ${LOCKF}
 
 if [[ $verbose == "1" ]] ;then 
   echo "Settings:"
-  echo "SHOCK_SERVER_URL:\t\t${SHOCK_SERVER_URL}"
-  echo "SHOCK_DATA_PATH:\t${SHOCK_SERVER_URL}" 
-  echo "LOCATION_NAME:\t\t${LOCATION_NAME}"
-  echo "TSM_DUMP:\t\t${TSM_DUMP}"
+  echo "SHOCK_SERVER_URL:   ${SHOCK_SERVER_URL}"
+  echo "SHOCK_DATA_PATH:    ${SHOCK_SERVER_URL}" 
+  echo "LOCATION_NAME:      ${LOCATION_NAME}"
+  echo "TSM_DUMP:           ${TSM_DUMP}"
 fi
 
 # check if the dsmc command is available
@@ -207,7 +207,7 @@ if [ ! -x "$(which dsmc)" ] ; then
   exit 1
 fi
 
-if [ ! "${force}x" -eq "x" ] ; then 
+if [ "${force}x" != "x" ] ; then 
   if [ -x ${WCOPY} ] || [ -x ${OUTCOPY} ] ; then
      echo " [$(basename $0)] Output files from last run exist, exiting. (check: ${WCOPY} and/or ${OUTCOPY}) "
     exit 1
@@ -265,6 +265,10 @@ while read line; do
 
       if echo ${JSON} |  grep -q locations.stored="false" ; then 
         # already requested skip to next ${id}
+        /bin/true 
+         if [[ $verbose == "1" ]] ; then 
+	           echo "${id} already requested skipping .."
+         fi
       else 
          # write names to request file
          echo "${DATAFILE}" >> ${OUTCOPY}
@@ -278,7 +282,7 @@ while read line; do
             echo " [$(basename $0)] can't write to ${SHOCK_SERVER_URL}; exiting (node: ${id})" >&2
             echo "RAW JSON: \n${JSON}\n"
             exit 1
-          fi 
+         fi 
       fi  
 done <${WCOPY}
 
